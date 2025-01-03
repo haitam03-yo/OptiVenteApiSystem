@@ -1,0 +1,2 @@
+from .SalesPredictionRequest import SalesPredictionRequest
+from .SalesPredictionResponse import SalesPredictionResponse
