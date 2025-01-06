@@ -68,4 +68,4 @@ The `.env` file is used to store sensitive information, like API keys. To set up
 cp .env.example .env
 ```
 
-After copying the example, open the `.env` file and configure values such as `OPENAI_API_KEY` and any other credentials required for the project.
+After copying the example, open the `.env` file and configure values required for the project.

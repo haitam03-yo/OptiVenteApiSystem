@@ -81,7 +81,22 @@ class PredictionController(BaseController):
 
     
     def preprocess_features(self, request: SalesPredictionRequest):
-        # Map request data to a DataFrame
+
+
+ 
+        # Initialize variables for jour_ferie and weekend
+        jour_ferie_value = ""
+        weekend_value = ""
+
+        # If 'jour_ferie' is within the last 12 months, set jour_ferie as "Jour Ferie"
+        if jour_ferie_condition and (current_date - jour_ferie_condition).days <= 365:
+            jour_ferie_value = "Jour Ferie"
+
+        # If it's Saturday or Sunday, set weekend as "Weekend"
+        if weekend_condition and weekend_condition.weekday() in [5, 6]:  # Saturday=5, Sunday=6
+            weekend_value = "Weekend"
+
+        # Now prepare the data to send in the request
         data = {
             'id_produit': [request.id_produit],
             'date': [request.date],
@@ -89,19 +104,22 @@ class PredictionController(BaseController):
             'marque': [request.marque],
             'prix_unitaire': [request.prix_unitaire],
             'promotion': [request.promotion],
-            'jour_ferie': [request.jour_ferie],
-            'weekend': [request.weekend],
             'stock_disponible': [request.stock_disponible],
             'condition_meteo': [request.condition_meteo],
             'region': [request.region],
             'moment_journee': [request.moment_journee],
         }
 
+
+
         df = pd.DataFrame(data)
 
         # Convert 'date' column to datetime
         df['date'] = pd.to_datetime(df['date'])
-        
+        df['jour_ferie'] = (df['date'].dt.weekday >= 5).astype(int)
+
+        df['weekend'] = df['date'].dt.month.apply(lambda x: 1 if x == 12 else 0)
+
 
         # Add date features
         df = self.getDateFeature(df)
