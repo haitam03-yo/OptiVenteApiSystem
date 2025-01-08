@@ -69,3 +69,8 @@ cp .env.example .env
 ```
 
 After copying the example, open the `.env` file and configure values required for the project.
+## Run the FastApi Server
+
+```bash
+uvicorn main:app --reload --host 0.0.0.0 --port 5000
+```
