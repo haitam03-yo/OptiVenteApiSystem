@@ -45,7 +45,7 @@ For further exploration, you can access the project notebook via [this Google Co
 * Activate your newly created environment:
 
   ```bash
-  conda activate mini-rag-app
+  conda activate opti-vente-api-system
   ```
 
 ## Installation
