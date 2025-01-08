@@ -53,7 +53,7 @@ class PredictionController(BaseController):
         df['day'] = df['date'].dt.day
         df['weekday'] = df['date'].dt.weekday
         df['week'] = df['date'].dt.isocalendar().week
-        df = df.drop('date', axis=1)
+        df.drop('date',axis=1)
         return df
     
     def encode_cat_col(self, df):
@@ -82,20 +82,7 @@ class PredictionController(BaseController):
     
     def preprocess_features(self, request: SalesPredictionRequest):
 
-
- 
-        # Initialize variables for jour_ferie and weekend
-        jour_ferie_value = ""
-        weekend_value = ""
-
-        # If 'jour_ferie' is within the last 12 months, set jour_ferie as "Jour Ferie"
-        if jour_ferie_condition and (current_date - jour_ferie_condition).days <= 365:
-            jour_ferie_value = "Jour Ferie"
-
-        # If it's Saturday or Sunday, set weekend as "Weekend"
-        if weekend_condition and weekend_condition.weekday() in [5, 6]:  # Saturday=5, Sunday=6
-            weekend_value = "Weekend"
-
+        
         # Now prepare the data to send in the request
         data = {
             'id_produit': [request.id_produit],
@@ -122,7 +109,6 @@ class PredictionController(BaseController):
 
 
         # Add date features
-        df = self.getDateFeature(df)
 
         # Encode categorical columns
         df = self.encode_cat_col(df)
@@ -132,18 +118,39 @@ class PredictionController(BaseController):
 
     def predict_sales(self, request: SalesPredictionRequest):
         models = self.upload_models()
-
+        
         # Preprocess the input features
         features = self.preprocess_features(request)
         features1 = features.drop(['id_produit'], axis=1)
+        
 
-        # Predict using each model
-        all_models_predicted_sales = []
-        for model in models:
-            predicted_sales = floor(model.predict(features1))
-            all_models_predicted_sales.append(predicted_sales[0])
+        
+        predictions = []
+        
+        # Loop through the next 'forecast_period' days to predict sales
+        for i in range(request.forecast_period):
+            # Shift the date for each prediction (assuming daily data)
+            future_date = features['date'].iloc[0] + pd.Timedelta(days=i+1)
+            features1['date'] = future_date
             
-        # Perform voting ensemble
-        final_prediction = self.voting_ensemble(all_models_predicted_sales)
+            features1 = self.getDateFeature(features1)
+            feature_order = ['categorie', 'marque', 'prix_unitaire', 'promotion', 'jour_ferie', 'weekend', 
+                        'stock_disponible', 'condition_meteo', 'region', 'moment_journee', 'year', 
+                        'month', 'day', 'weekday', 'week', 'id_produit_encoded']
 
-        return SalesPredictionResponse(predicted_sales=final_prediction)
+            # Reorder columns in features1 according to feature_order
+            features1 = features1[feature_order]
+            
+            
+            # Predict using each model
+            all_models_predicted_sales = []
+            for model in models:
+                predicted_sales = floor(model.predict(features1))
+                all_models_predicted_sales.append(predicted_sales[0])
+            
+            # Perform voting ensemble
+            final_prediction = self.voting_ensemble(all_models_predicted_sales)
+            print((future_date,final_prediction))
+            predictions.append(final_prediction)
+        
+        return SalesPredictionResponse(predicted_sales=predictions)

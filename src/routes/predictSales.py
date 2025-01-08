@@ -20,5 +20,6 @@ async def prediction_sales_endpoint(request: SalesPredictionRequest):
     return predicted_sales
 
 @prediction_sales_router.post('/welcome')
-async def prediction_sales_endpoint():
+async def prediction_sales_endpoint(request:SalesPredictionRequest):
+    print(request)
     return "hi"
